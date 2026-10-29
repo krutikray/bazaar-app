@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bazaar Bangalore</title>
+<meta name="description" content="Triaged second-hand deals from Bangalore's buy-and-sell subreddits.">
+<meta name="theme-color" content="#121A21">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bazaar">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+
+  :root{
+    color-scheme: light;
+    --ink:#121A21; --paper:#F6F3EC; --card:#FFFFFF; --rule:#E2DCD0;
+    --slate:#6C7884; --slate-deep:#48535E;
+    --marigold:#E0912F; --marigold-soft:#FBEFDB;
+    --green:#2E8B59; --green-soft:#E2F1E7;
+    --clay:#B5533F; --clay-soft:#F7E6E1;
+    --shadow:0 1px 2px rgba(18,26,33,.06), 0 6px 16px -10px rgba(18,26,33,.22);
+    --display:"Bricolage Grotesque","Trebuchet MS",sans-serif;
+    --body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --ink:#ECE7DD; --paper:#11171C; --card:#18212A; --rule:#2A3843;
+      --slate:#90A0AD; --slate-deep:#B4C2CD;
+      --marigold:#F0A94A; --marigold-soft:#372A16;
+      --green:#58BE88; --green-soft:#17301F;
+      --clay:#E07E66; --clay-soft:#36201B;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 20px -12px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --ink:#ECE7DD; --paper:#11171C; --card:#18212A; --rule:#2A3843;
+    --slate:#90A0AD; --slate-deep:#B4C2CD;
+    --marigold:#F0A94A; --marigold-soft:#372A16;
+    --green:#58BE88; --green-soft:#17301F;
+    --clay:#E07E66; --clay-soft:#36201B;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 20px -12px rgba(0,0,0,.7);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--body); font-size:15px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px; margin:0 auto; padding:0 16px; padding-block:0 40px}
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky; top:env(safe-area-inset-top, 0px); z-index:20;
+    background:color-mix(in srgb, var(--paper) 92%, transparent);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--rule);
+  }
+  .head-in{max-width:640px; margin:0 auto; padding:14px 16px 0}
+  .brand{display:flex; align-items:baseline; justify-content:space-between; gap:12px; min-width:0}
+  h1{
+    font-family:var(--display); font-weight:800; font-size:26px;
+    letter-spacing:-.02em; margin:0; text-wrap:balance;
+  }
+  h1 .dot{color:var(--marigold)}
+  .stamp{
+    font-family:var(--mono); font-size:11px; color:var(--slate);
+    text-align:right; white-space:pre-line; line-height:1.35;
+    flex:0 0 auto;
+  }
+  .chips{
+    display:flex; gap:7px; overflow-x:auto; padding:12px 0 11px;
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex:0 0 auto; font-family:var(--body); font-size:12.5px; font-weight:500;
+    padding:6px 12px; border-radius:999px; cursor:pointer;
+    border:1px solid var(--rule); background:transparent; color:var(--slate-deep);
+    transition:background .12s, color .12s, border-color .12s;
+  }
+  .chip:hover{border-color:var(--slate)}
+  .chip[aria-pressed="true"]{
+    background:var(--ink); color:var(--paper); border-color:var(--ink);
+  }
+  .chip .n{font-family:var(--mono); opacity:.65; margin-left:5px}
+  :focus-visible{outline:2px solid var(--marigold); outline-offset:2px; border-radius:4px}
+
+  /* ---------- cards ---------- */
+  .list{display:flex; flex-direction:column; gap:14px; padding-top:16px}
+  .card{
+    max-width:100%;
+    background:var(--card); border:1px solid var(--rule); border-radius:12px;
+    box-shadow:var(--shadow); overflow:hidden; position:relative;
+  }
+  .card.is-dismissed{opacity:.42}
+  .stripe{position:absolute; inset:0 auto 0 0; width:3px}
+  .v-buy .stripe{background:var(--green)}
+  .v-look .stripe{background:var(--marigold)}
+  .v-marginal .stripe{background:var(--marigold)}
+  .v-caution .stripe{background:var(--clay)}
+  .v-pass .stripe{background:var(--clay)}
+  .v-unpriced .stripe{background:var(--slate)}
+
+  .shot{
+    display:block; width:100%; aspect-ratio:16/10; object-fit:cover;
+    background:var(--marigold-soft); max-width:100%;
+  }
+  .no-shot{
+    display:flex; align-items:center; justify-content:center;
+    aspect-ratio:16/10; background:var(--marigold-soft);
+    font-family:var(--mono); font-size:11px; color:var(--slate);
+  }
+  .body{padding:14px 15px 15px 17px; display:flex; flex-direction:column; gap:10px; min-width:0}
+
+  .topline{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; min-width:0}
+  h2{
+    font-family:var(--display); font-weight:600; font-size:17px; line-height:1.25;
+    letter-spacing:-.01em; margin:0; text-wrap:balance;
+    flex:1 1 auto; min-width:0; overflow-wrap:anywhere;
+  }
+  .badge{
+    flex:0 0 auto; font-family:var(--mono); font-size:10px; font-weight:600;
+    letter-spacing:.08em; text-transform:uppercase;
+    padding:4px 8px; border-radius:5px; white-space:nowrap;
+    margin-top:2px;
+  }
+  .v-buy .badge{background:var(--green-soft); color:var(--green)}
+  .v-look .badge,.v-marginal .badge{background:var(--marigold-soft); color:var(--marigold)}
+  .v-caution .badge{background:var(--clay-soft); color:var(--clay)}
+  .v-pass .badge{background:var(--clay-soft); color:var(--clay)}
+  .v-unpriced .badge{background:var(--rule); color:var(--slate-deep)}
+
+  .money{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+  .ask{
+    font-family:var(--mono); font-weight:600; font-size:24px;
+    letter-spacing:-.02em; font-variant-numeric:tabular-nums;
+  }
+  .street{
+    font-family:var(--mono); font-size:12.5px; color:var(--slate);
+    font-variant-numeric:tabular-nums;
+  }
+  .street s{text-decoration-thickness:1px}
+  .delta{
+    font-family:var(--mono); font-size:12.5px; font-weight:600;
+    padding:2px 7px; border-radius:5px; font-variant-numeric:tabular-nums;
+  }
+  .v-buy .delta{background:var(--green-soft); color:var(--green)}
+  .v-look .delta,.v-marginal .delta{background:var(--marigold-soft); color:var(--marigold)}
+  .v-caution .delta{background:var(--green-soft); color:var(--green)}
+  .v-pass .delta{background:var(--clay-soft); color:var(--clay)}
+  .delta.over{background:var(--clay-soft); color:var(--clay)}
+
+  .conf{
+    font-family:var(--mono); font-size:10.5px; color:var(--slate);
+    letter-spacing:.04em; overflow-wrap:anywhere;
+  }
+  .conf b{color:var(--slate-deep); font-weight:600}
+  p{margin:0}
+  .cond{font-size:13.5px; color:var(--slate-deep)}
+  .note{
+    font-size:13.5px; border-left:2px solid var(--rule);
+    padding-left:11px; color:var(--ink);
+  }
+  .meta{
+    display:flex; gap:12px; flex-wrap:wrap; align-items:center;
+    font-family:var(--mono); font-size:11px; color:var(--slate);
+    border-top:1px solid var(--rule); padding-top:11px;
+  }
+  .fresh{color:var(--green); font-weight:600}
+
+  .acts{display:flex; gap:8px; flex-wrap:wrap}
+  .btn{
+    font-family:var(--body); font-size:13px; font-weight:500;
+    padding:8px 13px; border-radius:7px; border:1px solid var(--rule);
+    background:transparent; color:var(--ink); cursor:pointer;
+    text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+    transition:background .12s, border-color .12s;
+  }
+  .btn:hover{border-color:var(--slate)}
+  .btn.primary{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+  .btn.primary:hover{opacity:.88}
+  .btn[aria-pressed="true"]{background:var(--marigold-soft); border-color:var(--marigold); color:var(--marigold)}
+  .btn:disabled{opacity:.5; cursor:default}
+
+  .empty{
+    text-align:center; padding:48px 16px; color:var(--slate);
+    font-size:14px; border:1px dashed var(--rule); border-radius:12px; margin-top:16px;
+  }
+  footer{
+    margin-top:26px; padding-top:16px; border-top:1px solid var(--rule);
+    font-size:12px; color:var(--slate); line-height:1.6;
+  }
+  footer b{color:var(--slate-deep); font-weight:600}
+  .sync{font-family:var(--mono); font-size:10.5px; color:var(--slate); margin-top:6px}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+
+  /* PWA-only: the artifact skeleton used to supply these. */
+  html, body { background: var(--paper); }
+  :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+  .offline-note{
+    margin:10px 0 0; padding:8px 11px; border-radius:8px;
+    background:var(--marigold-soft); color:var(--marigold);
+    font-family:var(--mono); font-size:11px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="head-in">
+    <div class="brand">
+      <h1>Bazaar<span class="dot">.</span></h1>
+      <div class="stamp" id="stamp"></div>
+    </div>
+    <div class="chips" id="chips" role="group" aria-label="Filter listings"></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="offline" class="offline-note" hidden></div>
+  <div class="list" id="list"></div>
+  <footer>
+    <b>How to read this.</b> Street price comes from at least two Indian retailers,
+    never from memory and never from MRP. <b>Firm</b> means the exact variant was
+    matched and the sources agree; <b>rough</b> means the variant is uncertain;
+    <b>used-market</b> means it is not sold new and the band comes from comparable
+    used sales; <b>unpriced</b> means it could not be pinned down, and no delta is
+    shown rather than a guessed one. Your bar is 30% off and &#8377;1,500 saved.
+    <div class="sync" id="sync">Saved and hidden items are kept on this device.</div>
+  </footer>
+</div>
+
+<script>
+const VERDICT = {
+  buy:      {label:"Worth it",     cls:"v-buy"},
+  look:     {label:"Worth a look", cls:"v-look"},
+  marginal: {label:"Marginal",     cls:"v-marginal"},
+  caution:  {label:"Caution",      cls:"v-caution"},
+  pass:     {label:"Pass",         cls:"v-pass"},
+  unpriced: {label:"Unpriced",     cls:"v-unpriced"}
+};
+const FILTERS = [
+  {k:"all", label:"All"}, {k:"good", label:"Worth it"},
+  {k:"saved", label:"Saved"}, {k:"hidden", label:"Hidden"}
+];
+const KEY = "bazaar.triage.v1";
+
+let DATA = {generated:null, scanned:0, findings:[]};
+let state = {};
+let filter = "all";
+
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { state = {}; }
+function persist(){
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* private mode */ }
+}
+
+const rupee = n => "₹" + n.toLocaleString("en-IN");
+const age = h => h < 1 ? Math.round(h*60) + "m ago"
+               : h < 48 ? Math.round(h) + "h ago"
+               : Math.round(h/24) + "d ago";
+
+function visible(){
+  return DATA.findings.filter(f => {
+    const s = state[f.id];
+    if (filter === "hidden") return s === "dismissed";
+    if (s === "dismissed") return false;
+    if (filter === "saved") return s === "saved";
+    if (filter === "good")  return f.verdict === "buy" || f.verdict === "look";
+    return true;
+  });
+}
+function counts(){
+  const live = DATA.findings.filter(f => state[f.id] !== "dismissed");
+  return {all: live.length,
+    good: live.filter(f => f.verdict==="buy"||f.verdict==="look").length,
+    saved: live.filter(f => state[f.id]==="saved").length,
+    hidden: DATA.findings.filter(f => state[f.id]==="dismissed").length};
+}
+function renderChips(){
+  const c = counts(), box = document.getElementById("chips");
+  box.textContent = "";
+  FILTERS.forEach(f => {
+    const b = document.createElement("button");
+    b.className = "chip"; b.type = "button";
+    b.setAttribute("aria-pressed", String(filter === f.k));
+    b.append(f.label);
+    const n = document.createElement("span"); n.className = "n"; n.textContent = c[f.k];
+    b.append(n);
+    b.onclick = () => { filter = f.k; render(); };
+    box.append(b);
+  });
+}
+function card(f){
+  const v = VERDICT[f.verdict] || VERDICT.unpriced;
+  const el = document.createElement("article");
+  el.className = "card " + v.cls + (state[f.id]==="dismissed" ? " is-dismissed" : "");
+  const stripe = document.createElement("div"); stripe.className = "stripe"; el.append(stripe);
+  if (f.img){
+    const img = document.createElement("img");
+    img.className = "shot"; img.src = f.img; img.alt = f.title; img.loading = "lazy";
+    el.append(img);
+  } else {
+    const ph = document.createElement("div");
+    ph.className = "no-shot"; ph.textContent = "no photo in listing"; el.append(ph);
+  }
+  const body = document.createElement("div"); body.className = "body";
+  const top = document.createElement("div"); top.className = "topline";
+  const h = document.createElement("h2"); h.textContent = f.title;
+  const badge = document.createElement("span"); badge.className = "badge"; badge.textContent = v.label;
+  top.append(h, badge); body.append(top);
+
+  const money = document.createElement("div"); money.className = "money";
+  const ask = document.createElement("span"); ask.className = "ask"; ask.textContent = f.ask == null ? "Price on ask" : rupee(f.ask);
+  money.append(ask);
+  if (f.street){
+    const st = document.createElement("span"); st.className = "street";
+    const sEl = document.createElement("s"); sEl.textContent = rupee(f.street);
+    st.append(sEl, document.createTextNode(f.confidence === "used-market" ? " used" : " new"));
+    money.append(st);
+    if (f.delta != null){
+      const over = f.delta < 0;
+      const d = document.createElement("span");
+      d.className = "delta" + (over ? " over" : "");
+      d.textContent = over ? "+" + rupee(-f.delta) + "  " + Math.abs(f.pct) + "% over"
+                           : "−" + rupee(f.delta) + "  " + f.pct + "%";
+      money.append(d);
+    }
+  }
+  body.append(money);
+
+  if (f.sources){
+    const conf = document.createElement("div"); conf.className = "conf";
+    const b = document.createElement("b"); b.textContent = String(f.confidence).toUpperCase();
+    conf.append(b, document.createTextNode(" · " + f.sources));
+    body.append(conf);
+  }
+  const cond = document.createElement("p"); cond.className = "cond"; cond.textContent = f.condition; body.append(cond);
+  const note = document.createElement("p"); note.className = "note"; note.textContent = f.note; body.append(note);
+
+  const meta = document.createElement("div"); meta.className = "meta";
+  const a = document.createElement("span"); a.textContent = age(f.age_hours);
+  if (f.age_hours < 3) a.className = "fresh";
+  meta.append(a);
+  if (f.area){ const ar = document.createElement("span"); ar.textContent = f.area; meta.append(ar); }
+  const cat = document.createElement("span"); cat.textContent = f.category; meta.append(cat);
+  if (f.source){ const sc = document.createElement("span"); sc.textContent = f.source; meta.append(sc); }
+  body.append(meta);
+
+  const acts = document.createElement("div"); acts.className = "acts";
+  const open = document.createElement("a");
+  open.className = "btn primary"; open.href = f.url; open.target = "_blank";
+  open.rel = "noopener"; open.textContent = "Open listing";
+  const save = document.createElement("button");
+  save.className = "btn"; save.type = "button";
+  save.setAttribute("aria-pressed", String(state[f.id]==="saved"));
+  save.textContent = state[f.id]==="saved" ? "Saved" : "Save";
+  save.onclick = () => set(f.id, state[f.id]==="saved" ? null : "saved");
+  const hide = document.createElement("button");
+  hide.className = "btn"; hide.type = "button";
+  hide.textContent = state[f.id]==="dismissed" ? "Restore" : "Hide";
+  hide.onclick = () => set(f.id, state[f.id]==="dismissed" ? null : "dismissed");
+  acts.append(open, save, hide); body.append(acts);
+  el.append(body);
+  return el;
+}
+function render(){
+  renderChips();
+  const list = document.getElementById("list");
+  list.textContent = "";
+  const rows = visible();
+  if (!rows.length){
+    const e = document.createElement("div"); e.className = "empty";
+    e.textContent = !DATA.findings.length ? "No deals in the latest scan."
+      : filter === "saved" ? "Nothing saved yet."
+      : filter === "hidden" ? "Nothing hidden." : "No listings in this view.";
+    list.append(e); return;
+  }
+  rows.forEach(f => list.append(card(f)));
+}
+function set(id, val){
+  if (val === null) delete state[id]; else state[id] = val;
+  persist(); render();
+}
+function stamp(){
+  const el = document.getElementById("stamp");
+  if (!DATA.generated){ el.textContent = ""; return; }
+  const d = new Date(DATA.generated);
+  // Say how OLD this is, not just when it was made. An absolute timestamp
+  // reads the same whether the data is 3 minutes or 3 days stale, which is
+  // exactly how a frozen copy went unnoticed.
+  const mins = Math.max(0, Math.round((Date.now() - d.getTime()) / 60000));
+  const ago = mins < 2 ? "just now"
+            : mins < 60 ? mins + "m ago"
+            : mins < 1440 ? Math.round(mins / 60) + "h ago"
+            : Math.round(mins / 1440) + "d ago";
+  el.textContent = "updated " + ago + "\n" + DATA.scanned + " scanned";
+  el.classList.toggle("stale", mins > 240);
+  el.title = d.toLocaleString("en-IN");
+}
+
+async function load(){
+  try {
+    // Network first so an installed app shows the latest scan, cache second
+    // so it still opens on the metro with no signal.
+    const res = await fetch("data.json?t=" + Date.now(), {cache: "no-store"});
+    if (!res.ok) throw new Error(res.status);
+    DATA = await res.json();
+    document.getElementById("offline").hidden = true;
+  } catch (e) {
+    try {
+      const cached = await caches.match("data.json");
+      if (cached) {
+        DATA = await cached.json();
+        const n = document.getElementById("offline");
+        n.textContent = "Offline — showing the last scan that reached this device.";
+        n.hidden = false;
+      }
+    } catch (e2) { /* nothing cached yet */ }
+  }
+  stamp(); render();
+}
+
+render();
+load();
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
